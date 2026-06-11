@@ -1,0 +1,60 @@
+/**
+ * Parked Next.js route handler — Mission Control GitHub webhook (Layer 1).
+ *
+ * Activate once Vercel hosting is connected (see ADR 0001 — adding a real API
+ * route requires removing `output: "export"` from next.config.ts). Move this
+ * file to `src/app/api/mc/github-webhook/route.ts` and delete the `.pending`
+ * suffix.
+ *
+ * Verifies the GitHub HMAC signature, then delegates to the same pure
+ * transform used by `scripts/mc-ingest-pr.mjs` and unit-tested under
+ * `src/mission-control/github-ingest.test.ts`.
+ */
+
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+import { mergeCodeArtifact, type CodeArtifact } from "@/mission-control/code-artifact";
+import { buildArtifactFromPullRequest, type GithubPullRequestEvent } from "@/mission-control/github-ingest";
+import {
+  findIssueByIdentifier,
+  getCodeArtifact,
+  paperclipConfigFromEnv,
+  putCodeArtifact,
+} from "@/mission-control/paperclip-client";
+
+export const runtime = "nodejs";
+
+function verifySignature(secret: string, payload: string, signature: string | null): boolean {
+  if (!signature?.startsWith("sha256=")) return false;
+  const expected = "sha256=" + createHmac("sha256", secret).update(payload).digest("hex");
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export async function POST(request: Request): Promise<Response> {
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
+  if (!secret) return new Response("webhook secret not configured", { status: 503 });
+
+  const raw = await request.text();
+  if (!verifySignature(secret, raw, request.headers.get("x-hub-signature-256"))) {
+    return new Response("invalid signature", { status: 401 });
+  }
+  if (request.headers.get("x-github-event") !== "pull_request") {
+    return new Response("ignored", { status: 202 });
+  }
+
+  const event = JSON.parse(raw) as GithubPullRequestEvent;
+  const built = buildArtifactFromPullRequest(event);
+  if (!built) return new Response("no issue identifier", { status: 202 });
+
+  const config = paperclipConfigFromEnv();
+  const issue = await findIssueByIdentifier(config, built.issueIdentifier);
+  if (!issue) return new Response(`no issue for ${built.issueIdentifier}`, { status: 404 });
+
+  const existing = await getCodeArtifact(config, issue.id);
+  const merged: CodeArtifact = mergeCodeArtifact(existing.artifact, built.artifact);
+  await putCodeArtifact(config, issue.id, merged, existing.baseRevisionId);
+
+  return Response.json({ ok: true, issueIdentifier: built.issueIdentifier });
+}

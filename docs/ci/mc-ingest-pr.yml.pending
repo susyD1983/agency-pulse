@@ -1,0 +1,31 @@
+# Parked workflow — Mission Control PR ingestion.
+#
+# Activates the `scripts/mc-ingest-pr.mjs` ingestion path on every PR event.
+# The runner already has Node 20+; we just need three repo secrets:
+#   - PAPERCLIP_API_URL
+#   - PAPERCLIP_API_KEY  (long-lived agent token for the ingestion identity)
+#   - PAPERCLIP_COMPANY_ID
+#
+# Move to `.github/workflows/mc-ingest-pr.yml` via `scripts/activate-workflows.sh`
+# once `gh` has the workflow scope (see ADR 0001 / project memory).
+
+name: mc-ingest-pr
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, closed]
+permissions:
+  contents: read
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Ingest PR event into Paperclip code-artifact document
+        env:
+          PAPERCLIP_API_URL: ${{ secrets.PAPERCLIP_API_URL }}
+          PAPERCLIP_API_KEY: ${{ secrets.PAPERCLIP_API_KEY }}
+          PAPERCLIP_COMPANY_ID: ${{ secrets.PAPERCLIP_COMPANY_ID }}
+        run: node scripts/mc-ingest-pr.mjs "$GITHUB_EVENT_PATH"
