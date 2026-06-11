@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[97367,["/agency-pulse/_next/static/chunks/158myu8e_yme3.js"],"OutletBoundary"]
+3:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","main",null,{"className":"flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-6 py-24 dark:bg-black","children":["$","div",null,{"className":"flex w-full max-w-2xl flex-col gap-6 text-center","children":[["$","p",null,{"className":"text-sm font-medium uppercase tracking-widest text-zinc-500 dark:text-zinc-400","children":"Agency Pulse"}],["$","h1",null,{"className":"text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-5xl","children":"The COO dashboard for modern agencies."}],["$","p",null,{"className":"text-lg leading-8 text-zinc-600 dark:text-zinc-400","children":"We're early — building in the open. Check back soon."}],["$","p",null,{"className":"pt-12 text-xs text-zinc-400 dark:text-zinc-600","children":"Placeholder landing page. Source on GitHub."}]]}]}],null,["$","$L2",null,{"children":["$","$3",null,{"name":"Next.MetadataOutlet","children":"$@4"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"djdLXVqgbdKoOhQg7tWog"}
+4:null
