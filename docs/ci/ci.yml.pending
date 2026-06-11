@@ -1,0 +1,56 @@
+# CI workflow — pending CEO token-scope upgrade
+#
+# This file is the GitHub Actions workflow we want at .github/workflows/ci.yml.
+# It is parked here because the gh CLI token used to push this repo is missing
+# the `workflow` OAuth scope, which is required to push files under
+# .github/workflows/. Once the scope is granted (or the CEO copies this file
+# into place via the GitHub UI), CI runs on every PR.
+#
+# Resolution options:
+#   1. gh auth refresh -h github.com -s workflow   (interactive, CEO machine)
+#   2. Copy this file into .github/workflows/ci.yml via the GitHub web UI.
+#
+# Once installed, delete this .pending stub.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
