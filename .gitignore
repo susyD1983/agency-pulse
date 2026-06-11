@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# founder case-study fixtures — private; only README + .gitkeep are tracked
+/fixtures/founder-case-study/*
+!/fixtures/founder-case-study/.gitkeep
+!/fixtures/founder-case-study/README.md
